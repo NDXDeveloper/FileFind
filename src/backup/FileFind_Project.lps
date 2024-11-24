@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="12"/>
+    <BuildModes Active="Win64-Release"/>
+    <Units>
+      <Unit>
+        <Filename Value="FileFind_Project.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="2"/>
+        <CursorPos X="13" Y="12"/>
+        <UsageCount Value="168"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitmain.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="MainForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="UnitMain"/>
+        <TopLine Value="374"/>
+        <CursorPos X="35" Y="409"/>
+        <UsageCount Value="168"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="findfile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FindFile"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="20"/>
+        <CursorPos X="7" Y="59"/>
+        <UsageCount Value="146"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="searchunit.pas"/>
+        <UnitName Value="SearchUnit"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="22"/>
+        <CursorPos X="3" Y="63"/>
+        <UsageCount Value="166"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unit1.pas"/>
+        <ComponentName Value="Form1"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="Unit1"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="3" Y="33"/>
+        <UsageCount Value="51"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/lresources.pp"/>
+        <UnitName Value="LResources"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="39"/>
+        <CursorPos Y="3164"/>
+        <UsageCount Value="5"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/interfaces/gtk2/gtk2winapi.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="8642"/>
+        <CursorPos Y="8658"/>
+        <UsageCount Value="4"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/interfaces/gtk2/gtk2widgetset.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2458"/>
+        <CursorPos Y="2503"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/components/lazutils/lazlogger.pas"/>
+        <UnitName Value="LazLogger"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="227"/>
+        <CursorPos X="13" Y="232"/>
+        <UsageCount Value="3"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/rtl/objpas/sysutils/filutil.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="542"/>
+        <CursorPos X="10" Y="560"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/rtl/objpas/sysutils/filutilh.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="182"/>
+        <CursorPos X="25" Y="201"/>
+        <UsageCount Value="8"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/include/application.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1257"/>
+        <CursorPos Y="1284"/>
+        <UsageCount Value="10"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/interfaces/gtk2/gtk2memostrings.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="209"/>
+        <CursorPos Y="242"/>
+        <UsageCount Value="10"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/rtl/objpas/sysutils/sysutilh.inc"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="10" Y="29"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/rtl/objpas/sysutils/finah.inc"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="10" Y="33"/>
+        <UsageCount Value="1"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/customtimer.pas"/>
+        <UnitName Value="CustomTimer"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="162"/>
+        <CursorPos Y="180"/>
+        <UsageCount Value="5"/>
+      </Unit>
+      <Unit>
+        <Filename Value="unitmain.lfm"/>
+        <HasResources Value="True"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="2"/>
+        <DefaultSyntaxHighlighter Value="LFM"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/menus.pp"/>
+        <UnitName Value="Menus"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="435"/>
+        <CursorPos X="3" Y="452"/>
+        <UsageCount Value="3"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/packages/fcl-process/src/processbody.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="168"/>
+        <CursorPos Y="180"/>
+        <UsageCount Value="4"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/include/menuitem.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="283"/>
+        <CursorPos Y="301"/>
+        <UsageCount Value="4"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/rtl/objpas/sysutils/datih.inc"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="10" Y="137"/>
+        <UsageCount Value="3"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/rtl/linux/x86_64/stat.inc"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="9" Y="33"/>
+        <UsageCount Value="4"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../findfile/Demo/Main.dfm"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="4"/>
+        <DefaultSyntaxHighlighter Value="LFM"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/include/customcheckbox.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="102"/>
+        <CursorPos Y="128"/>
+        <UsageCount Value="6"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/include/wincontrol.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="7410"/>
+        <CursorPos Y="7433"/>
+        <UsageCount Value="6"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/lib/lazarus/3.0/lcl/interfaces/gtk2/gtk2wsstdctrls.pp"/>
+        <UnitName Value="Gtk2WSStdCtrls"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="953"/>
+        <CursorPos Y="975"/>
+        <UsageCount Value="6"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../Nouveau dossier/findfile/FindFile.pas"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="4"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/lazarus/3.6.0/lcl/graphics.pp"/>
+        <UnitName Value="Graphics"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="273"/>
+        <CursorPos X="9" Y="282"/>
+        <UsageCount Value="8"/>
+      </Unit>
+      <Unit>
+        <Filename Value="/usr/share/fpcsrc/3.2.2/rtl/linux/ostypes.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="226"/>
+        <CursorPos X="5" Y="244"/>
+        <UsageCount Value="6"/>
+      </Unit>
+    </Units>
+    <JumpHistory HistoryIndex="29">
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1128" Column="32" TopLine="1101"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="852" TopLine="837"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="854" Column="27" TopLine="834"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1161" TopLine="1122"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="2" Column="50"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="40" Column="40" TopLine="8"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="178" Column="23" TopLine="146"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="723" Column="55" TopLine="691"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="763" Column="29" TopLine="731"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="837" Column="50" TopLine="805"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="854" Column="35" TopLine="822"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="857" Column="63" TopLine="825"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="900" Column="24" TopLine="868"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1045" Column="61" TopLine="1013"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1066" Column="21" TopLine="1034"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1069" Column="57" TopLine="1037"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1076" Column="35" TopLine="1044"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1210" Column="26" TopLine="1178"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1220" Column="37" TopLine="1188"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1269" Column="23" TopLine="1237"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1315" Column="21" TopLine="1303"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="16" Column="46" TopLine="15"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="40" Column="40" TopLine="15"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="179" Column="52" TopLine="146"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="724" Column="55" TopLine="692"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="764" Column="29" TopLine="732"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="838" Column="50" TopLine="806"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="855" Column="35" TopLine="823"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="858" Column="63" TopLine="826"/>
+      </Position>
+      <Position>
+        <Filename Value="findfile.pas"/>
+        <Caret Line="1172" Column="38" TopLine="1154"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+  <Debugging>
+    <BreakPoints>
+      <Item>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="searchunit.pas"/>
+        <Line Value="396"/>
+      </Item>
+      <Item>
+        <Kind Value="bpkSource"/>
+        <WatchScope Value="wpsLocal"/>
+        <WatchKind Value="wpkWrite"/>
+        <Source Value="searchunit.pas"/>
+        <Line Value="517"/>
+      </Item>
+    </BreakPoints>
+  </Debugging>
+</CONFIG>
