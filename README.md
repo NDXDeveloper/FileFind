@@ -114,5 +114,5 @@ Special thanks to:
 
 ---
 
-Ready to make your file searches faster and easier? Try **FileFind** today! 🚀
+Ready to make your file searches faster and easier? Try **FileFind** today! 🚀 .
 
