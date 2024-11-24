@@ -1,32 +1,45 @@
 # Lazarus project files
-*.lps                   # Local session file
-*.compiled              # File indicating the project has been compiled
-*.local                 # User-specific local files
-*.identcache            # Identification cache
-*.o                     # Object file
-*.ppu                   # Compiled Pascal unit
+*.lps
+*.compiled
+*.local
+*.identcache
+*.o
+*.ppu
 
 # Binary files (safe to delete)
 *.exe
 *.dll
-*.so                    # Linux libraries
-*.dylib                 # MacOS libraries
-*.apk                   # Android
-*.dcu                   # Compiled Delphi unit (if mixed project)
+*.so
+*.dylib
+*.apk
+*.dcu
 
-# Directories
-backup/                 # Backup folders created by Lazarus
-lib/                    # Folders containing compiled files
-debug/                  # Debug files
-release/                # Release version files
-__history/              # Modification history
-__recovery/             # Recovery files
+# Directories (specific to your project structure)
+backup/
+lib/
+bin/
+debug/
+release/
+__history/
+__recovery/
 
 # Temporary files and backups
-*~                      # Temporary backup files
-*.~*                    # Backups
-*.bak                   # Backup files
-.DS_Store               # MacOS system files
+*~
+*.~*
+*.bak
+.DS_Store
 
 # Statistics and log files
-*.stat                  # Statistics files
+*.stat
+
+# Ignore system-specific files
+.idea/                  # IntelliJ IDEA files
+.vscode/                # VSCode files
+*.iml                   # Module files (IntelliJ/VSCode)
+
+# Ignore specific files in src/ folder
+src/backup/
+src/lib/
+src/bin/
+src/*.lps
+
