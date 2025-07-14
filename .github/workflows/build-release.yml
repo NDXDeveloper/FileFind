@@ -51,14 +51,25 @@ jobs:
           fpc -O2 -Xs -XX -CX filefind.lpr
         fi
 
-        # Check if binary was created
+        # Find the binary (Lazarus puts it in subdirectories)
         if [ -f filefind ]; then
-          strip filefind
-          echo "Build successful!"
+          BINARY_PATH="filefind"
+        elif [ -f bin/x86_64-linux/filefind ]; then
+          BINARY_PATH="bin/x86_64-linux/filefind"
+          cp bin/x86_64-linux/filefind ./filefind
+        elif [ -f lib/x86_64-linux/filefind ]; then
+          BINARY_PATH="lib/x86_64-linux/filefind"
+          cp lib/x86_64-linux/filefind ./filefind
         else
           echo "Build failed - binary not found"
+          find . -name "filefind" -type f 2>/dev/null || echo "No filefind binary found anywhere"
           exit 1
         fi
+
+        # Strip and verify
+        strip filefind
+        echo "Build successful! Binary: $BINARY_PATH"
+        ls -la filefind
 
     - name: Create Linux package structure
       run: |
