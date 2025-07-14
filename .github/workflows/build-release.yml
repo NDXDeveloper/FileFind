@@ -27,8 +27,11 @@ jobs:
       run: |
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION=${GITHUB_REF#refs/tags/}
+          # Remove 'v' prefix if present for Debian compatibility
+          VERSION=${VERSION#v}
         else
-          VERSION="dev-$(date +%Y%m%d)-${GITHUB_SHA::7}"
+          # Debian-compatible dev version format
+          VERSION="0.0.0-dev$(date +%Y%m%d).${GITHUB_SHA::7}"
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Building version: $VERSION"
