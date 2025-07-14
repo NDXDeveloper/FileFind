@@ -11,6 +11,8 @@ on:
 
 env:
   APP_NAME: filefind
+  # Note: github.ref_name will include the 'v' for tags, e.g., 'v1.1.3'
+  # The version step below will handle removing it for the package version number.
   VERSION: ${{ github.ref_name }}
 
 permissions:
@@ -369,45 +371,61 @@ jobs:
         files: release-assets/*
         draft: false
         prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-        generate_release_notes: true
+        # generate_release_notes: true # We are providing a custom body
         body: |
           ## FileFind ${{ needs.build-linux.outputs.version }}
 
           Advanced file search utility with comprehensive search options and cross-platform compatibility.
 
-          ### Downloads
+          ### Downloads 📦
 
-          **Linux:**
-          - 📦 `filefind_*_amd64.deb` - Debian/Ubuntu package
-          - 📁 `filefind-linux-portable-*.tar.gz` - Portable archive
+          - **Linux Debian/Ubuntu Package:** `filefind_${{ needs.build-linux.outputs.version }}_amd64.deb`
+          - **Linux Portable Archive:** `filefind-linux-portable-${{ needs.build-linux.outputs.version }}.tar.gz`
+          - **Windows Installer:** `FileFind-Setup-${{ needs.build-linux.outputs.version }}.exe`
+          - **Windows Portable Archive:** `filefind-windows-portable-${{ needs.build-linux.outputs.version }}.zip`
 
-          **Windows:**
-          - 🔧 `FileFind-Setup-*.exe` - Windows installer
-          - 📁 `filefind-windows-portable-*.zip` - Portable archive
+          ---
 
-          ### Installation
+          ### Installation 🚀
 
-          **Linux (DEB):**
+          #### Linux (DEB)
+          **1. Download the package:**
           ```bash
-          sudo dpkg -i filefind_*_amd64.deb
-          sudo apt-get install -f  # Fix dependencies if needed
+          curl -LO [https://github.com/$](https://github.com/$){{ github.repository }}/releases/download/${{ github.ref_name }}/filefind_${{ needs.build-linux.outputs.version }}_amd64.deb
           ```
 
-          **Linux (Portable):**
+          **2. Install the package (choose one method):**
+          *Method A: Recommended (handles dependencies)*
           ```bash
-          tar -xzf filefind-linux-portable-*.tar.gz
+          sudo apt install ./filefind_${{ needs.build-linux.outputs.version }}_amd64.deb
+          ```
+          *Method B: Using dpkg*
+          ```bash
+          sudo dpkg -i filefind_${{ needs.build-linux.outputs.version }}_amd64.deb
+          # If you have dependency errors, run this:
+          sudo apt-get install -f
+          ```
+
+          #### Linux (Portable)
+          **1. Download and extract:**
+          ```bash
+          curl -LO [https://github.com/$](https://github.com/$){{ github.repository }}/releases/download/${{ github.ref_name }}/filefind-linux-portable-${{ needs.build-linux.outputs.version }}.tar.gz
+          tar -xzf filefind-linux-portable-${{ needs.build-linux.outputs.version }}.tar.gz
+          ```
+          **2. Run the application:**
+          ```bash
           cd filefind-linux-portable
           ./run.sh
           ```
 
-          **Windows:**
-          - Run the installer or extract the portable archive
+          #### Windows
+          - **Installer:** Download and run `FileFind-Setup-${{ needs.build-linux.outputs.version }}.exe`.
+          - **Portable:** Download and extract `filefind-windows-portable-${{ needs.build-linux.outputs.version }}.zip`.
 
-          ### Verification
+          ---
 
+          ### Verification ✅
           All files are signed with SHA256 checksums available in `checksums.txt`.
-
-          For more information, see the [Installation Guide](docs/INSTALL.md).
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
