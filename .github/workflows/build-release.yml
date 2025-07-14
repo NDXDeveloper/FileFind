@@ -81,17 +81,20 @@ jobs:
 
     - name: Create Linux package structure
       run: |
+        # Create standard package directories
         mkdir -p package/usr/bin
         mkdir -p package/usr/share/applications
-        mkdir -p package/usr/share/pixmaps
+        # Use standard Freedesktop icon theme path (assuming a 48x48 icon)
+        mkdir -p package/usr/share/icons/hicolor/48x48/apps
         mkdir -p package/DEBIAN
 
         # Copy binary
         cp src/filefind package/usr/bin/
         chmod +x package/usr/bin/filefind
 
-        # Copy icon
-        cp src/filefind.ico package/usr/share/pixmaps/filefind.png
+        # Copy icon to the correct theme directory
+        # Note: Renaming .ico to .png is not ideal. A proper conversion should be part of the build.
+        cp src/filefind.ico package/usr/share/icons/hicolor/48x48/apps/filefind.png
 
         # Create desktop file
         cat > package/usr/share/applications/filefind.desktop << EOF
@@ -126,40 +129,8 @@ jobs:
         Homepage: https://github.com/NDXDeveloper/FileFind
         EOF
 
-    - name: Create DEB postinst script
-      run: |
-        cat > package/DEBIAN/postinst << 'EOF'
-        #!/bin/bash
-        set -e
-
-        # Update desktop database
-        if command -v update-desktop-database >/dev/null 2>&1; then
-            update-desktop-database -q /usr/share/applications
-        fi
-
-        # Update icon cache
-        if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-            gtk-update-icon-cache -q /usr/share/pixmaps
-        fi
-
-        exit 0
-        EOF
-        chmod +x package/DEBIAN/postinst
-
-    - name: Create DEB prerm script
-      run: |
-        cat > package/DEBIAN/prerm << 'EOF'
-        #!/bin/bash
-        set -e
-
-        # Remove desktop database entries
-        if command -v update-desktop-database >/dev/null 2>&1; then
-            update-desktop-database -q /usr/share/applications
-        fi
-
-        exit 0
-        EOF
-        chmod +x package/DEBIAN/prerm
+    # The postinst and prerm scripts are removed as they are no longer needed.
+    # dpkg triggers will handle icon cache and desktop database updates automatically.
 
     - name: Build DEB package
       run: |
@@ -448,7 +419,7 @@ jobs:
     steps:
     - name: Notify build status
       run: |
-        if [[ "${{ needs.build-linux.result }}" == "success" ]] && [[ "${{ needs.build-linux.result }}" == "success" ]]; then
+        if [[ "${{ needs.build-linux.result }}" == "success" ]] && [[ "${{ needs.build-windows.result }}" == "success" ]]; then
           echo "✅ All builds completed successfully!"
           echo "Version: ${{ needs.build-linux.outputs.version }}"
         else
