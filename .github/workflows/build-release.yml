@@ -207,92 +207,44 @@ jobs:
 
     - name: Install Free Pascal Compiler
       run: |
-        # Use curl instead of Invoke-WebRequest (more reliable)
-        Write-Host "Downloading FPC with curl..."
-        curl -L -o fpc-installer.exe "https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.i386-win32.exe"
+        # Use Chocolatey for complete Lazarus installation
+        Write-Host "Installing Lazarus (includes FPC) via Chocolatey..."
+        choco install lazarus -y
 
-        # Verify download
-        if (Test-Path "fpc-installer.exe") {
-          $fileInfo = Get-Item "fpc-installer.exe"
-          Write-Host "Downloaded file size: $($fileInfo.Length) bytes"
+        # Add Lazarus paths to environment
+        echo "C:\lazarus\fpc\3.2.2\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "C:\lazarus" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-          if ($fileInfo.Length -gt 10MB) {
-            # Install FPC
-            Write-Host "Installing FPC..."
-            Start-Process -FilePath "fpc-installer.exe" -ArgumentList "/SILENT" -Wait
-
-            # Add to PATH
-            echo "C:\FPC\3.2.2\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-            Write-Host "FPC installation completed"
-          } else {
-            Write-Host "File too small, using Chocolatey..."
-            choco install freepascal -y
-            echo "C:\tools\freepascal\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          }
-        } else {
-          Write-Host "Download failed, using Chocolatey..."
-          choco install freepascal -y
-          echo "C:\tools\freepascal\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        }
+        # Verify installation
+        Write-Host "Verifying Lazarus installation..."
+        & "C:\lazarus\lazbuild.exe" --version
 
     - name: Build Windows binary
       run: |
         cd src
 
         $version = "${{ needs.build-linux.outputs.version }}"
-        $buildDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
-        $commit = "${{ github.sha }}".Substring(0,7)
 
-        # Parse version numbers
-        $versionClean = $version -replace '^v', ''
-        $versionParts = $versionClean -split '\.'
-        $major = if ($versionParts[0]) { $versionParts[0] } else { "1" }
-        $minor = if ($versionParts[1]) { $versionParts[1] } else { "0" }
-        $patch = if ($versionParts[2]) { $versionParts[2] } else { "0" }
-        $build = "0"
+        # Try to build with Lazarus first (handles dependencies)
+        Write-Host "Building with Lazarus..."
+        if (Test-Path "C:\lazarus\lazbuild.exe") {
+          & "C:\lazarus\lazbuild.exe" --build-mode=Release filefind.lpi
+        } else {
+          Write-Host "Lazarus not found, trying FPC with simplified approach..."
 
-        # Create version resource file
-        $rcContent = @"
-        #define VER_FILEVERSION    $major,$minor,$patch,$build
-        #define VER_PRODUCTVERSION $major,$minor,$patch,$build
+          # Simple FPC compilation without resources for now
+          & fpc -O2 -Xs -XX -CX filefind.lpr
+        }
 
-        1 VERSIONINFO
-        FILEVERSION VER_FILEVERSION
-        PRODUCTVERSION VER_PRODUCTVERSION
-        FILEFLAGSMASK 0x3fL
-        FILEFLAGS 0x0L
-        FILEOS 0x40004L
-        FILETYPE 0x1L
-        FILESUBTYPE 0x0L
-        BEGIN
-            BLOCK "StringFileInfo"
-            BEGIN
-                BLOCK "040904E4"
-                BEGIN
-                    VALUE "CompanyName", "Nicolas DEOUX\000"
-                    VALUE "FileDescription", "Advanced file search utility\000"
-                    VALUE "FileVersion", "$version\000"
-                    VALUE "InternalName", "filefind\000"
-                    VALUE "LegalCopyright", "Copyright (C) 2024 Nicolas DEOUX\000"
-                    VALUE "OriginalFilename", "filefind.exe\000"
-                    VALUE "ProductName", "FileFind\000"
-                    VALUE "ProductVersion", "$version\000"
-                    VALUE "BuildDate", "$buildDate\000"
-                    VALUE "BuildCommit", "$commit\000"
-                END
-            END
-            BLOCK "VarFileInfo"
-            BEGIN
-                VALUE "Translation", 0x409, 1252
-            END
-        END
-        "@
-
-        $rcContent | Out-File -FilePath "filefind.rc" -Encoding utf8
-
-        # Compile resource file then compile with FPC
-        windres filefind.rc filefind.res
-        fpc -O2 -Xs -XX -CX -WR filefind.res filefind.lpr
+        # Verify binary was created
+        if (Test-Path "filefind.exe") {
+          Write-Host "Build successful!"
+          Get-Item "filefind.exe" | Format-List Name, Length, LastWriteTime
+        } else {
+          Write-Host "Build failed - binary not found"
+          Get-ChildItem -Filter "*.exe" -Recurse | Format-Table Name, FullName
+          exit 1
+        }
 
     - name: Create Windows installer script
       run: |
