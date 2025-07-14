@@ -233,10 +233,12 @@ jobs:
           exit 1
         }
 
-    - name: Create Windows installer script
+    - name: Create Windows installer scripts
       run: |
         $version = "${{ needs.build-linux.outputs.version }}"
-        $issScript = @"
+
+        # SYSTEM INSTALLER (Admin required) - Fixed version
+        $issSystemScript = @"
         #define MyAppName "FileFind"
         #define MyAppVersion "$version"
         #define MyAppPublisher "Nicolas DEOUX"
@@ -255,20 +257,24 @@ jobs:
         DefaultGroupName={#MyAppName}
         AllowNoIcons=yes
         OutputDir=.
-        OutputBaseFilename=FileFind-Setup-{#MyAppVersion}
+        OutputBaseFilename=FileFind-Setup-System-{#MyAppVersion}
         Compression=lzma
         SolidCompression=yes
         WizardStyle=modern
         ArchitecturesAllowed=x86 x64
         ArchitecturesInstallIn64BitMode=x64
+        PrivilegesRequired=admin
+        ChangesEnvironment=yes
+        UninstallDisplayIcon={app}\{#MyAppExeName}
 
         [Languages]
         Name: "english"; MessagesFile: "compiler:Default.isl"
         Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
         [Tasks]
-        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkonce
         Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
+        Name: "addtopath"; Description: "Add to PATH environment variable"; GroupDescription: "System Integration"; Flags: checkonce
 
         [Files]
         Source: "src\filefind.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -277,14 +283,17 @@ jobs:
         Source: "docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
 
         [Icons]
-        Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+        Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
         Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-        Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-        Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
+        Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+        Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
 
         [Registry]
         Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekeyifempty
         Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekeyifempty
+
+        [Environment]
+        Name: "PATH"; Value: "{app}"; Flags: expandconstants; Check: IsTaskSelected('addtopath')
 
         [Run]
         Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
@@ -296,15 +305,89 @@ jobs:
         end;
         "@
 
-        $issScript | Out-File -FilePath "installer.iss" -Encoding utf8
+        # USER INSTALLER (No admin required)
+        $issUserScript = @"
+        #define MyAppName "FileFind"
+        #define MyAppVersion "$version"
+        #define MyAppPublisher "Nicolas DEOUX"
+        #define MyAppURL "https://github.com/NDXDeveloper/FileFind"
+        #define MyAppExeName "filefind.exe"
+
+        [Setup]
+        AppId={{B8C5C1F0-8A2D-4E3F-9B1A-2C4D5E6F7G8H-USER}
+        AppName={#MyAppName} (User Install)
+        AppVersion={#MyAppVersion}
+        AppPublisher={#MyAppPublisher}
+        AppPublisherURL={#MyAppURL}
+        AppSupportURL={#MyAppURL}
+        AppUpdatesURL={#MyAppURL}
+        DefaultDirName={localappdata}\Programs\{#MyAppName}
+        DefaultGroupName={#MyAppName}
+        AllowNoIcons=yes
+        OutputDir=.
+        OutputBaseFilename=FileFind-Setup-User-{#MyAppVersion}
+        Compression=lzma
+        SolidCompression=yes
+        WizardStyle=modern
+        ArchitecturesAllowed=x86 x64
+        ArchitecturesInstallIn64BitMode=x64
+        PrivilegesRequired=lowest
+        PrivilegesRequiredOverridesAllowed=dialog
+        ChangesEnvironment=yes
+        UninstallDisplayIcon={app}\{#MyAppExeName}
+
+        [Languages]
+        Name: "english"; MessagesFile: "compiler:Default.isl"
+        Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+
+        [Tasks]
+        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkonce
+        Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
+        Name: "addtopath"; Description: "Add to PATH environment variable (current user only)"; GroupDescription: "User Integration"; Flags: checkonce
+
+        [Files]
+        Source: "src\filefind.exe"; DestDir: "{app}"; Flags: ignoreversion
+        Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
+        Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+        Source: "docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+        [Icons]
+        Name: "{userprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
+        Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+        Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
+
+        [Registry]
+        Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekeyifempty
+        Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekeyifempty
+
+        [Environment]
+        Name: "PATH"; Value: "{app}"; Flags: expandconstants; Check: IsTaskSelected('addtopath')
+
+        [Run]
+        Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+
+        [Code]
+        procedure InitializeWizard;
+        begin
+          WizardForm.LicenseAcceptedRadio.Checked := True;
+        end;
+        "@
+
+        # Save both scripts
+        $issSystemScript | Out-File -FilePath "installer-system.iss" -Encoding utf8
+        $issUserScript | Out-File -FilePath "installer-user.iss" -Encoding utf8
 
     - name: Install Inno Setup
       run: |
         choco install innosetup -y
 
-    - name: Create Windows installer
+    - name: Create Windows installers
       run: |
-        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+        # Create System installer (admin required)
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer-system.iss
+
+        # Create User installer (no admin required)
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer-user.iss
 
     - name: Create portable Windows archive
       run: |
@@ -327,7 +410,8 @@ jobs:
       with:
         name: windows-builds
         path: |
-          FileFind-Setup-*.exe
+          FileFind-Setup-System-*.exe
+          FileFind-Setup-User-*.exe
           filefind-windows-portable-*.zip
           src/filefind.exe
         retention-days: 30
@@ -374,10 +458,14 @@ jobs:
 
           ### Downloads 📦
 
-          - **Linux Debian/Ubuntu Package:** `filefind_${{ needs.build-linux.outputs.version }}_amd64.deb`
-          - **Linux Portable Archive:** `filefind-linux-portable-${{ needs.build-linux.outputs.version }}.tar.gz`
-          - **Windows Installer:** `FileFind-Setup-${{ needs.build-linux.outputs.version }}.exe`
-          - **Windows Portable Archive:** `filefind-windows-portable-${{ needs.build-linux.outputs.version }}.zip`
+          **Linux:**
+          - 📦 **Debian/Ubuntu Package:** `filefind_${{ needs.build-linux.outputs.version }}_amd64.deb`
+          - 📁 **Portable Archive:** `filefind-linux-portable-${{ needs.build-linux.outputs.version }}.tar.gz`
+
+          **Windows:**
+          - 🔧 **System Installer (Admin):** `FileFind-Setup-System-${{ needs.build-linux.outputs.version }}.exe`
+          - 👤 **User Installer (No Admin):** `FileFind-Setup-User-${{ needs.build-linux.outputs.version }}.exe`
+          - 📁 **Portable Archive:** `filefind-windows-portable-${{ needs.build-linux.outputs.version }}.zip`
 
           ---
 
@@ -417,19 +505,42 @@ jobs:
           ```
 
           #### Windows
-          - **Installer:** Download and run `FileFind-Setup-${{ needs.build-linux.outputs.version }}.exe`
-          - **Portable:** Download and extract `filefind-windows-portable-${{ needs.build-linux.outputs.version }}.zip`
+
+          **System Installer (Recommended for Admins):**
+          - Download and run `FileFind-Setup-System-${{ needs.build-linux.outputs.version }}.exe`
+          - Requires administrator privileges
+          - Installs for all users in Program Files
+          - Automatically adds to system PATH
+
+          **User Installer (For Standard Users):**
+          - Download and run `FileFind-Setup-User-${{ needs.build-linux.outputs.version }}.exe`
+          - No administrator privileges required
+          - Installs in user AppData folder
+          - Adds to user PATH only
+
+          **Portable:**
+          - Download and extract `filefind-windows-portable-${{ needs.build-linux.outputs.version }}.zip`
+          - No installation required
 
           ---
+
+          ### Features ✨
+
+          **New in this release:**
+          - 🔧 **Dual Windows installers** - System (admin) and User (no admin) options
+          - 🎯 **Automatic PATH setup** - FileFind available from command line
+          - 🖥️ **Desktop shortcut** - Checked by default during installation
+          - 🎨 **Proper icons** - Display correctly in Windows uninstall list
+          - 📦 **Enhanced packaging** - Professional Linux .deb and Windows installers
 
           ### Verification ✅
           All files are signed with SHA256 checksums available in `checksums.txt`.
 
-          ### What's New
-          - Automated CI/CD pipeline for cross-platform builds
-          - Professional packaging for Linux (.deb) and Windows (installer)
-          - Portable archives for both platforms
-          - Enhanced build process with Lazarus 4.0.0
+          ### Technical Details 🛠️
+          - **Build System:** Automated CI/CD with GitHub Actions
+          - **Compiler:** Lazarus 4.0.0 with Free Pascal Compiler 3.2.2
+          - **Platforms:** Linux x86_64, Windows x86/x64
+          - **Dependencies:** Minimal system dependencies for maximum compatibility
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -444,6 +555,12 @@ jobs:
         if [[ "${{ needs.build-linux.result }}" == "success" ]] && [[ "${{ needs.build-windows.result }}" == "success" ]]; then
           echo "✅ All builds completed successfully!"
           echo "Version: ${{ needs.build-linux.outputs.version }}"
+          echo ""
+          echo "📦 Artifacts generated:"
+          echo "  Linux: .deb package + portable archive"
+          echo "  Windows: System installer + User installer + portable archive"
+          echo ""
+          echo "🚀 Ready for release!"
         else
           echo "❌ Some builds failed"
           echo "Linux: ${{ needs.build-linux.result }}"
