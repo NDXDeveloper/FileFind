@@ -337,7 +337,7 @@ jobs:
           src/filefind.exe
         retention-days: 30
 
-- name: Create Release
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: release-assets/*
