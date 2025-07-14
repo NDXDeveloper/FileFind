@@ -1,0 +1,491 @@
+name: Build and Release FileFind
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [published]
+
+env:
+  APP_NAME: filefind
+  VERSION: ${{ github.ref_name }}
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version
+      id: version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION="dev-$(date +%Y%m%d)-${GITHUB_SHA::7}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+
+    - name: Install Free Pascal Compiler
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y fpc lazarus-ide-qt5 build-essential
+
+    - name: Build Linux binary
+      run: |
+        cd src
+
+        # Create version resource file for Linux
+        VERSION="${{ steps.version.outputs.version }}"
+        BUILD_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        BUILD_COMMIT=${GITHUB_SHA::7}
+
+        # Parse version numbers for resource file
+        IFS='.' read -ra VERSION_PARTS <<< "${VERSION}"
+        MAJOR=${VERSION_PARTS[0]:-1}
+        MINOR=${VERSION_PARTS[1]:-0}
+        PATCH=${VERSION_PARTS[2]:-0}
+        BUILD=0
+
+        # Remove 'v' prefix if present
+        MAJOR=${MAJOR#v}
+
+        # Create resource file (works on Linux too with FPC)
+        cat > filefind.rc << EOF
+        #define VER_FILEVERSION    $MAJOR,$MINOR,$PATCH,$BUILD
+        #define VER_PRODUCTVERSION $MAJOR,$MINOR,$PATCH,$BUILD
+
+        1 VERSIONINFO
+        FILEVERSION VER_FILEVERSION
+        PRODUCTVERSION VER_PRODUCTVERSION
+        FILEFLAGSMASK 0x3fL
+        FILEFLAGS 0x0L
+        FILEOS 0x40004L
+        FILETYPE 0x1L
+        FILESUBTYPE 0x0L
+        BEGIN
+            BLOCK "StringFileInfo"
+            BEGIN
+                BLOCK "040904E4"
+                BEGIN
+                    VALUE "CompanyName", "Nicolas DEOUX\\000"
+                    VALUE "FileDescription", "Advanced file search utility\\000"
+                    VALUE "FileVersion", "$VERSION\\000"
+                    VALUE "InternalName", "filefind\\000"
+                    VALUE "LegalCopyright", "Copyright (C) 2024 Nicolas DEOUX\\000"
+                    VALUE "OriginalFilename", "filefind\\000"
+                    VALUE "ProductName", "FileFind\\000"
+                    VALUE "ProductVersion", "$VERSION\\000"
+                    VALUE "BuildDate", "$BUILD_DATE\\000"
+                    VALUE "BuildCommit", "$BUILD_COMMIT\\000"
+                END
+            END
+            BLOCK "VarFileInfo"
+            BEGIN
+                VALUE "Translation", 0x409, 1252
+            END
+        END
+        EOF
+
+        # Compile with version resources (FPC can handle .rc files directly on Linux)
+        fpc -O2 -Xs -XX -CX -WR filefind.rc filefind.lpr
+        strip filefind
+
+    - name: Create Linux package structure
+      run: |
+        mkdir -p package/usr/bin
+        mkdir -p package/usr/share/applications
+        mkdir -p package/usr/share/pixmaps
+        mkdir -p package/DEBIAN
+
+        # Copy binary
+        cp src/filefind package/usr/bin/
+        chmod +x package/usr/bin/filefind
+
+        # Copy icon
+        cp src/filefind.ico package/usr/share/pixmaps/filefind.png
+
+        # Create desktop file
+        cat > package/usr/share/applications/filefind.desktop << EOF
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=FileFind
+        Comment=Advanced file search utility
+        Exec=filefind
+        Icon=filefind
+        Terminal=false
+        Categories=Utility;FileTools;
+        EOF
+
+    - name: Create DEB control file
+      run: |
+        cat > package/DEBIAN/control << EOF
+        Package: filefind
+        Version: ${{ steps.version.outputs.version }}
+        Section: utils
+        Priority: optional
+        Architecture: amd64
+        Depends: libc6 (>= 2.17)
+        Maintainer: Nicolas DEOUX <NDXDev@gmail.com>
+        Description: Advanced file search utility
+         FileFind is an advanced file search utility designed to efficiently
+         locate files and directories based on a wide range of criteria,
+         including name patterns, size, attributes, content, and timestamps.
+         .
+         Features include comprehensive search options, content search,
+         advanced filters, and cross-platform compatibility.
+        Homepage: https://github.com/NDXDeveloper/FileFind
+        EOF
+
+    - name: Create DEB postinst script
+      run: |
+        cat > package/DEBIAN/postinst << 'EOF'
+        #!/bin/bash
+        set -e
+
+        # Update desktop database
+        if command -v update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database -q /usr/share/applications
+        fi
+
+        # Update icon cache
+        if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+            gtk-update-icon-cache -q /usr/share/pixmaps
+        fi
+
+        exit 0
+        EOF
+        chmod +x package/DEBIAN/postinst
+
+    - name: Create DEB prerm script
+      run: |
+        cat > package/DEBIAN/prerm << 'EOF'
+        #!/bin/bash
+        set -e
+
+        # Remove desktop database entries
+        if command -v update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database -q /usr/share/applications
+        fi
+
+        exit 0
+        EOF
+        chmod +x package/DEBIAN/prerm
+
+    - name: Build DEB package
+      run: |
+        dpkg-deb --build package
+        DEB_FILE="filefind_${{ steps.version.outputs.version }}_amd64.deb"
+        mv package.deb "$DEB_FILE"
+
+        # Fix permissions
+        chmod a+r "$DEB_FILE"
+
+        # Verify package
+        dpkg-deb --info "$DEB_FILE"
+        dpkg-deb --contents "$DEB_FILE"
+
+    - name: Create portable Linux archive
+      run: |
+        mkdir -p filefind-linux-portable
+        cp src/filefind filefind-linux-portable/
+        cp README.md filefind-linux-portable/
+        cp LICENSE.txt filefind-linux-portable/
+
+        # Create run script
+        cat > filefind-linux-portable/run.sh << 'EOF'
+        #!/bin/bash
+        DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        "$DIR/filefind" "$@"
+        EOF
+        chmod +x filefind-linux-portable/run.sh
+
+        tar -czf "filefind-linux-portable-${{ steps.version.outputs.version }}.tar.gz" filefind-linux-portable/
+        chmod a+r "filefind-linux-portable-${{ steps.version.outputs.version }}.tar.gz"
+
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-builds
+        path: |
+          filefind_*.deb
+          filefind-linux-portable-*.tar.gz
+          src/filefind
+        retention-days: 30
+
+  build-windows:
+    runs-on: windows-latest
+    needs: build-linux
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Free Pascal Compiler
+      run: |
+        # Download and install FPC
+        Invoke-WebRequest -Uri "https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.i386-win32.exe" -OutFile "fpc-installer.exe"
+        Start-Process -FilePath "fpc-installer.exe" -ArgumentList "/SILENT" -Wait
+
+        # Add FPC to PATH
+        $env:PATH += ";C:\FPC\3.2.2\bin\i386-win32"
+        echo "C:\FPC\3.2.2\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Build Windows binary
+      run: |
+        cd src
+
+        $version = "${{ needs.build-linux.outputs.version }}"
+        $buildDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
+        $commit = "${{ github.sha }}".Substring(0,7)
+
+        # Parse version numbers
+        $versionClean = $version -replace '^v', ''
+        $versionParts = $versionClean -split '\.'
+        $major = if ($versionParts[0]) { $versionParts[0] } else { "1" }
+        $minor = if ($versionParts[1]) { $versionParts[1] } else { "0" }
+        $patch = if ($versionParts[2]) { $versionParts[2] } else { "0" }
+        $build = "0"
+
+        # Create version resource file
+        $rcContent = @"
+        #define VER_FILEVERSION    $major,$minor,$patch,$build
+        #define VER_PRODUCTVERSION $major,$minor,$patch,$build
+
+        1 VERSIONINFO
+        FILEVERSION VER_FILEVERSION
+        PRODUCTVERSION VER_PRODUCTVERSION
+        FILEFLAGSMASK 0x3fL
+        FILEFLAGS 0x0L
+        FILEOS 0x40004L
+        FILETYPE 0x1L
+        FILESUBTYPE 0x0L
+        BEGIN
+            BLOCK "StringFileInfo"
+            BEGIN
+                BLOCK "040904E4"
+                BEGIN
+                    VALUE "CompanyName", "Nicolas DEOUX\000"
+                    VALUE "FileDescription", "Advanced file search utility\000"
+                    VALUE "FileVersion", "$version\000"
+                    VALUE "InternalName", "filefind\000"
+                    VALUE "LegalCopyright", "Copyright (C) 2024 Nicolas DEOUX\000"
+                    VALUE "OriginalFilename", "filefind.exe\000"
+                    VALUE "ProductName", "FileFind\000"
+                    VALUE "ProductVersion", "$version\000"
+                    VALUE "BuildDate", "$buildDate\000"
+                    VALUE "BuildCommit", "$commit\000"
+                END
+            END
+            BLOCK "VarFileInfo"
+            BEGIN
+                VALUE "Translation", 0x409, 1252
+            END
+        END
+        "@
+
+        $rcContent | Out-File -FilePath "filefind.rc" -Encoding utf8
+
+        # Compile with version resources (FPC can handle .rc directly)
+        fpc -O2 -Xs -XX -CX -WR filefind.rc filefind.lpr
+
+    - name: Create Windows installer script
+      run: |
+        $version = "${{ needs.build-linux.outputs.version }}"
+        $issScript = @"
+        #define MyAppName "FileFind"
+        #define MyAppVersion "$version"
+        #define MyAppPublisher "Nicolas DEOUX"
+        #define MyAppURL "https://github.com/NDXDeveloper/FileFind"
+        #define MyAppExeName "filefind.exe"
+
+        [Setup]
+        AppId={{B8C5C1F0-8A2D-4E3F-9B1A-2C4D5E6F7G8H}
+        AppName={#MyAppName}
+        AppVersion={#MyAppVersion}
+        AppPublisher={#MyAppPublisher}
+        AppPublisherURL={#MyAppURL}
+        AppSupportURL={#MyAppURL}
+        AppUpdatesURL={#MyAppURL}
+        DefaultDirName={autopf}\{#MyAppName}
+        DefaultGroupName={#MyAppName}
+        AllowNoIcons=yes
+        OutputDir=.
+        OutputBaseFilename=FileFind-Setup-{#MyAppVersion}
+        Compression=lzma
+        SolidCompression=yes
+        WizardStyle=modern
+        ArchitecturesAllowed=x86 x64
+        ArchitecturesInstallIn64BitMode=x64
+
+        [Languages]
+        Name: "english"; MessagesFile: "compiler:Default.isl"
+        Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+
+        [Tasks]
+        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+        Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
+
+        [Files]
+        Source: "src\filefind.exe"; DestDir: "{app}"; Flags: ignoreversion
+        Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
+        Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+        Source: "docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+        [Icons]
+        Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+        Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+        Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+        Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: quicklaunchicon
+
+        [Registry]
+        Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekeyifempty
+        Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#MyAppExeName}"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekeyifempty
+
+        [Run]
+        Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+
+        [Code]
+        procedure InitializeWizard;
+        begin
+          WizardForm.LicenseAcceptedRadio.Checked := True;
+        end;
+        "@
+
+        $issScript | Out-File -FilePath "installer.iss" -Encoding utf8
+
+    - name: Install Inno Setup
+      run: |
+        choco install innosetup -y
+
+    - name: Create Windows installer
+      run: |
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+    - name: Create portable Windows archive
+      run: |
+        mkdir filefind-windows-portable
+        copy src\filefind.exe filefind-windows-portable\
+        copy README.md filefind-windows-portable\
+        copy LICENSE.txt filefind-windows-portable\
+
+        # Create batch file
+        @"
+        @echo off
+        cd /d "%~dp0"
+        filefind.exe %*
+        "@ | Out-File -FilePath "filefind-windows-portable\run.bat" -Encoding ascii
+
+        Compress-Archive -Path "filefind-windows-portable" -DestinationPath "filefind-windows-portable-${{ needs.build-linux.outputs.version }}.zip"
+
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-builds
+        path: |
+          FileFind-Setup-*.exe
+          filefind-windows-portable-*.zip
+          src/filefind.exe
+        retention-days: 30
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows]
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Prepare release assets
+      run: |
+        mkdir -p release-assets
+
+        # Copy Linux builds
+        cp linux-builds/*.deb release-assets/
+        cp linux-builds/*.tar.gz release-assets/
+
+        # Copy Windows builds
+        cp windows-builds/*.exe release-assets/
+        cp windows-builds/*.zip release-assets/
+
+        # Create checksums
+        cd release-assets
+        sha256sum * > checksums.txt
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release-assets/*
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        generate_release_notes: true
+        body: |
+          ## FileFind ${{ needs.build-linux.outputs.version }}
+
+          Advanced file search utility with comprehensive search options and cross-platform compatibility.
+
+          ### Downloads
+
+          **Linux:**
+          - 📦 `filefind_*_amd64.deb` - Debian/Ubuntu package
+          - 📁 `filefind-linux-portable-*.tar.gz` - Portable archive
+
+          **Windows:**
+          - 🔧 `FileFind-Setup-*.exe` - Windows installer
+          - 📁 `filefind-windows-portable-*.zip` - Portable archive
+
+          ### Installation
+
+          **Linux (DEB):**
+          ```bash
+          sudo dpkg -i filefind_*_amd64.deb
+          sudo apt-get install -f  # Fix dependencies if needed
+          ```
+
+          **Linux (Portable):**
+          ```bash
+          tar -xzf filefind-linux-portable-*.tar.gz
+          cd filefind-linux-portable
+          ./run.sh
+          ```
+
+          **Windows:**
+          - Run the installer or extract the portable archive
+
+          ### Verification
+
+          All files are signed with SHA256 checksums available in `checksums.txt`.
+
+          For more information, see the [Installation Guide](docs/INSTALL.md).
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows]
+    if: always()
+
+    steps:
+    - name: Notify build status
+      run: |
+        if [[ "${{ needs.build-linux.result }}" == "success" ]] && [[ "${{ needs.build-windows.result }}" == "success" ]]; then
+          echo "✅ All builds completed successfully!"
+          echo "Version: ${{ needs.build-linux.outputs.version }}"
+        else
+          echo "❌ Some builds failed"
+          echo "Linux: ${{ needs.build-linux.result }}"
+          echo "Windows: ${{ needs.build-windows.result }}"
+          exit 1
+        fi
