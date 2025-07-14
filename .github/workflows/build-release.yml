@@ -272,9 +272,9 @@ jobs:
         Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
         [Tasks]
-        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkonce
+        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checked
         Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
-        Name: "addtopath"; Description: "Add to PATH environment variable"; GroupDescription: "System Integration"; Flags: checkonce
+        Name: "addtopath"; Description: "Add to PATH environment variable"; GroupDescription: "System Integration"; Flags: checked
 
         [Files]
         Source: "src\filefind.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -341,9 +341,9 @@ jobs:
         Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 
         [Tasks]
-        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkonce
+        Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checked
         Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1
-        Name: "addtopath"; Description: "Add to PATH environment variable (current user only)"; GroupDescription: "User Integration"; Flags: checkonce
+        Name: "addtopath"; Description: "Add to PATH environment variable (current user only)"; GroupDescription: "User Integration"; Flags: checked
 
         [Files]
         Source: "src\filefind.exe"; DestDir: "{app}"; Flags: ignoreversion
