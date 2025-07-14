@@ -57,7 +57,7 @@ jobs:
         # Remove 'v' prefix if present
         MAJOR=${MAJOR#v}
 
-        # Create resource file (works on Linux too with FPC)
+        # Create resource file
         cat > filefind.rc << EOF
         #define VER_FILEVERSION    $MAJOR,$MINOR,$PATCH,$BUILD
         #define VER_PRODUCTVERSION $MAJOR,$MINOR,$PATCH,$BUILD
@@ -94,19 +94,15 @@ jobs:
         END
         EOF
 
-        # Install windres for compiling resources on Linux
+        # Try to compile resource file, but build without if it fails
+        echo "Attempting to compile resources..."
         sudo apt-get install -y binutils-mingw-w64
 
-        # Compile resource file if windres is available, otherwise build without resources
-        if command -v x86_64-w64-mingw32-windres >/dev/null 2>&1; then
-          x86_64-w64-mingw32-windres filefind.rc filefind.res 2>/dev/null || echo "windres failed, building without resources"
-          if [ -f filefind.res ]; then
-            fpc -O2 -Xs -XX -CX -WR filefind.res filefind.lpr
-          else
-            fpc -O2 -Xs -XX -CX filefind.lpr
-          fi
+        if x86_64-w64-mingw32-windres filefind.rc filefind.res 2>/dev/null && [ -f filefind.res ]; then
+          echo "Resources compiled successfully, building with version info"
+          fpc -O2 -Xs -XX -CX -WR filefind.res filefind.lpr
         else
-          echo "windres not available, building without resources"
+          echo "Resource compilation failed, building without version info"
           fpc -O2 -Xs -XX -CX filefind.lpr
         fi
 
