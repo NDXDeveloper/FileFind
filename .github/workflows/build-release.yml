@@ -13,6 +13,10 @@ env:
   APP_NAME: filefind
   VERSION: ${{ github.ref_name }}
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
