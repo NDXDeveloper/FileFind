@@ -94,8 +94,22 @@ jobs:
         END
         EOF
 
-        # Compile with version resources (FPC can handle .rc files directly on Linux)
-        fpc -O2 -Xs -XX -CX -WR filefind.rc filefind.lpr
+        # Install windres for compiling resources on Linux
+        sudo apt-get install -y binutils-mingw-w64
+
+        # Compile resource file if windres is available, otherwise build without resources
+        if command -v x86_64-w64-mingw32-windres >/dev/null 2>&1; then
+          x86_64-w64-mingw32-windres filefind.rc filefind.res 2>/dev/null || echo "windres failed, building without resources"
+          if [ -f filefind.res ]; then
+            fpc -O2 -Xs -XX -CX -WR filefind.res filefind.lpr
+          else
+            fpc -O2 -Xs -XX -CX filefind.lpr
+          fi
+        else
+          echo "windres not available, building without resources"
+          fpc -O2 -Xs -XX -CX filefind.lpr
+        fi
+
         strip filefind
 
     - name: Create Linux package structure
@@ -294,8 +308,9 @@ jobs:
 
         $rcContent | Out-File -FilePath "filefind.rc" -Encoding utf8
 
-        # Compile with version resources (FPC can handle .rc directly)
-        fpc -O2 -Xs -XX -CX -WR filefind.rc filefind.lpr
+        # Compile resource file then compile with FPC
+        windres filefind.rc filefind.res
+        fpc -O2 -Xs -XX -CX -WR filefind.res filefind.lpr
 
     - name: Create Windows installer script
       run: |
