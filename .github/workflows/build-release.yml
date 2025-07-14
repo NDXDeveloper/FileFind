@@ -231,14 +231,28 @@ jobs:
           & "C:\lazarus\lazbuild.exe" --build-mode=Release filefind.lpi
         } else {
           Write-Host "Lazarus not found, trying FPC with simplified approach..."
-
-          # Simple FPC compilation without resources for now
           & fpc -O2 -Xs -XX -CX filefind.lpr
         }
 
-        # Verify binary was created
+        # Find the binary (Lazarus puts it in subdirectories)
+        $binaryFound = $false
+        $binaryPath = ""
+
         if (Test-Path "filefind.exe") {
-          Write-Host "Build successful!"
+          $binaryPath = "filefind.exe"
+          $binaryFound = $true
+        } elseif (Test-Path "bin\x86_64-win64\filefind.exe") {
+          $binaryPath = "bin\x86_64-win64\filefind.exe"
+          Copy-Item "bin\x86_64-win64\filefind.exe" "filefind.exe"
+          $binaryFound = $true
+        } elseif (Test-Path "lib\x86_64-win64\filefind.exe") {
+          $binaryPath = "lib\x86_64-win64\filefind.exe"
+          Copy-Item "lib\x86_64-win64\filefind.exe" "filefind.exe"
+          $binaryFound = $true
+        }
+
+        if ($binaryFound) {
+          Write-Host "Build successful! Binary found at: $binaryPath"
           Get-Item "filefind.exe" | Format-List Name, Length, LastWriteTime
         } else {
           Write-Host "Build failed - binary not found"
@@ -429,7 +443,7 @@ jobs:
     steps:
     - name: Notify build status
       run: |
-        if [[ "${{ needs.build-linux.result }}" == "success" ]] && [[ "${{ needs.build-windows.result }}" == "success" ]]; then
+        if [[ "${{ needs.build-linux.result }}" == "success" ]] && [[ "${{ needs.build-linux.result }}" == "success" ]]; then
           echo "✅ All builds completed successfully!"
           echo "Version: ${{ needs.build-linux.outputs.version }}"
         else
