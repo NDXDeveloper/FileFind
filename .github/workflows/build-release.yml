@@ -207,13 +207,33 @@ jobs:
 
     - name: Install Free Pascal Compiler
       run: |
-        # Download and install FPC
-        Invoke-WebRequest -Uri "https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.i386-win32.exe" -OutFile "fpc-installer.exe"
-        Start-Process -FilePath "fpc-installer.exe" -ArgumentList "/SILENT" -Wait
+        # Use curl instead of Invoke-WebRequest (more reliable)
+        Write-Host "Downloading FPC with curl..."
+        curl -L -o fpc-installer.exe "https://downloads.sourceforge.net/project/freepascal/Win32/3.2.2/fpc-3.2.2.i386-win32.exe"
 
-        # Add FPC to PATH
-        $env:PATH += ";C:\FPC\3.2.2\bin\i386-win32"
-        echo "C:\FPC\3.2.2\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        # Verify download
+        if (Test-Path "fpc-installer.exe") {
+          $fileInfo = Get-Item "fpc-installer.exe"
+          Write-Host "Downloaded file size: $($fileInfo.Length) bytes"
+
+          if ($fileInfo.Length -gt 10MB) {
+            # Install FPC
+            Write-Host "Installing FPC..."
+            Start-Process -FilePath "fpc-installer.exe" -ArgumentList "/SILENT" -Wait
+
+            # Add to PATH
+            echo "C:\FPC\3.2.2\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            Write-Host "FPC installation completed"
+          } else {
+            Write-Host "File too small, using Chocolatey..."
+            choco install freepascal -y
+            echo "C:\tools\freepascal\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+        } else {
+          Write-Host "Download failed, using Chocolatey..."
+          choco install freepascal -y
+          echo "C:\tools\freepascal\bin\i386-win32" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        }
 
     - name: Build Windows binary
       run: |
